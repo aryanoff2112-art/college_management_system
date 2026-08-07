@@ -1,8 +1,11 @@
 #include <iostream>
 #include <string>
+#include <fstream>
+
 using namespace std;
 
-const int MAX = 100;
+const int MAX_STUDENTS = 100;
+const string FILE_NAME = "students.txt";
 
 struct Student
 {
@@ -12,34 +15,164 @@ struct Student
     string course;
 };
 
-Student students[MAX];
+Student students[MAX_STUDENTS];
 int totalStudents = 0;
+
+void addStudent();
+void viewStudents();
+void searchStudent();
+void updateStudent();
+void deleteStudent();
+void saveToFile();
+void loadFromFile();
+bool rollExists(int roll);
+
+bool rollExists(int roll)
+{
+    for (int i = 0; i < totalStudents; i++)
+    {
+        if (students[i].roll == roll)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void saveToFile()
+{
+    ofstream file(FILE_NAME);
+
+    if (!file)
+    {
+        cout << "\nError: Could not save student data!\n";
+        return;
+    }
+
+    for (int i = 0; i < totalStudents; i++)
+    {
+        file << students[i].roll << "|"
+             << students[i].name << "|"
+             << students[i].age << "|"
+             << students[i].course << "\n";
+    }
+
+    file.close();
+}
+
+void loadFromFile()
+{
+    ifstream file(FILE_NAME);
+
+    if (!file)
+    {
+        return;
+    }
+
+    totalStudents = 0;
+
+    while (totalStudents < MAX_STUDENTS)
+    {
+        string rollString;
+        string name;
+        string ageString;
+        string course;
+
+        if (!getline(file, rollString, '|'))
+            break;
+
+        if (!getline(file, name, '|'))
+            break;
+
+        if (!getline(file, ageString, '|'))
+            break;
+
+        if (!getline(file, course))
+            break;
+
+        try
+        {
+            students[totalStudents].roll = stoi(rollString);
+            students[totalStudents].age = stoi(ageString);
+        }
+        catch (...)
+        {
+            continue;
+        }
+
+        students[totalStudents].name = name;
+        students[totalStudents].course = course;
+
+        totalStudents++;
+    }
+
+    file.close();
+}
 
 void addStudent()
 {
-    if (totalStudents == MAX)
+    if (totalStudents >= MAX_STUDENTS)
     {
         cout << "\nDatabase Full!\n";
         return;
     }
 
-    cout << "\nEnter Roll Number: ";
-    cin >> students[totalStudents].roll;
+    int roll;
+
+    cout << "\n========== ADD STUDENT ==========\n";
+    cout << "Enter Roll Number: ";
+    cin >> roll;
+
+    if (roll <= 0)
+    {
+        cout << "\nError: Roll number must be positive!\n";
+        return;
+    }
+
+    if (rollExists(roll))
+    {
+        cout << "\nError: Roll number already exists!\n";
+        return;
+    }
+
+    students[totalStudents].roll = roll;
 
     cin.ignore();
 
     cout << "Enter Name: ";
     getline(cin, students[totalStudents].name);
 
+    if (students[totalStudents].name.empty())
+    {
+        cout << "\nError: Name cannot be empty!\n";
+        return;
+    }
+
     cout << "Enter Age: ";
     cin >> students[totalStudents].age;
+
+    if (students[totalStudents].age <= 0 ||
+        students[totalStudents].age > 100)
+    {
+        cout << "\nError: Invalid age!\n";
+        return;
+    }
 
     cin.ignore();
 
     cout << "Enter Course: ";
     getline(cin, students[totalStudents].course);
 
+    if (students[totalStudents].course.empty())
+    {
+        cout << "\nError: Course cannot be empty!\n";
+        return;
+    }
+
     totalStudents++;
+
+    saveToFile();
 
     cout << "\nStudent Added Successfully!\n";
 }
@@ -52,15 +185,16 @@ void viewStudents()
         return;
     }
 
-    cout << "\n========= STUDENT LIST =========\n";
+    cout << "\n========== STUDENT LIST ==========\n";
 
     for (int i = 0; i < totalStudents; i++)
     {
-        cout << "\nStudent " << i + 1 << endl;
-        cout << "Roll Number : " << students[i].roll << endl;
-        cout << "Name        : " << students[i].name << endl;
-        cout << "Age         : " << students[i].age << endl;
-        cout << "Course      : " << students[i].course << endl;
+        cout << "\nStudent " << i + 1 << "\n";
+        cout << "----------------------------------\n";
+        cout << "Roll Number : " << students[i].roll << "\n";
+        cout << "Name        : " << students[i].name << "\n";
+        cout << "Age         : " << students[i].age << "\n";
+        cout << "Course      : " << students[i].course << "\n";
     }
 }
 
@@ -73,7 +207,9 @@ void searchStudent()
     }
 
     int roll;
-    cout << "\nEnter Roll Number to Search: ";
+
+    cout << "\n========== SEARCH STUDENT ==========\n";
+    cout << "Enter Roll Number to Search: ";
     cin >> roll;
 
     for (int i = 0; i < totalStudents; i++)
@@ -81,10 +217,87 @@ void searchStudent()
         if (students[i].roll == roll)
         {
             cout << "\nStudent Found!\n";
-            cout << "Roll Number : " << students[i].roll << endl;
-            cout << "Name        : " << students[i].name << endl;
-            cout << "Age         : " << students[i].age << endl;
-            cout << "Course      : " << students[i].course << endl;
+            cout << "----------------------------------\n";
+            cout << "Roll Number : " << students[i].roll << "\n";
+            cout << "Name        : " << students[i].name << "\n";
+            cout << "Age         : " << students[i].age << "\n";
+            cout << "Course      : " << students[i].course << "\n";
+
+            return;
+        }
+    }
+
+    cout << "\nStudent Not Found!\n";
+}
+
+void updateStudent()
+{
+    if (totalStudents == 0)
+    {
+        cout << "\nNo Students Available!\n";
+        return;
+    }
+
+    int roll;
+
+    cout << "\n========== UPDATE STUDENT ==========\n";
+    cout << "Enter Roll Number to Update: ";
+    cin >> roll;
+
+    for (int i = 0; i < totalStudents; i++)
+    {
+        if (students[i].roll == roll)
+        {
+            cout << "\nCurrent Student Details\n";
+            cout << "----------------------------------\n";
+            cout << "Roll Number : " << students[i].roll << "\n";
+            cout << "Name        : " << students[i].name << "\n";
+            cout << "Age         : " << students[i].age << "\n";
+            cout << "Course      : " << students[i].course << "\n";
+
+            cin.ignore();
+
+            string newName;
+            int newAge;
+            string newCourse;
+
+            cout << "\nEnter New Name: ";
+            getline(cin, newName);
+
+            if (newName.empty())
+            {
+                cout << "\nError: Name cannot be empty!\n";
+                return;
+            }
+
+            cout << "Enter New Age: ";
+            cin >> newAge;
+
+            if (newAge <= 0 || newAge > 100)
+            {
+                cout << "\nError: Invalid age!\n";
+                return;
+            }
+
+            cin.ignore();
+
+            cout << "Enter New Course: ";
+            getline(cin, newCourse);
+
+            if (newCourse.empty())
+            {
+                cout << "\nError: Course cannot be empty!\n";
+                return;
+            }
+
+            students[i].name = newName;
+            students[i].age = newAge;
+            students[i].course = newCourse;
+
+            saveToFile();
+
+            cout << "\nStudent Updated Successfully!\n";
+
             return;
         }
     }
@@ -101,13 +314,30 @@ void deleteStudent()
     }
 
     int roll;
-    cout << "\nEnter Roll Number to Delete: ";
+
+    cout << "\n========== DELETE STUDENT ==========\n";
+    cout << "Enter Roll Number to Delete: ";
     cin >> roll;
 
     for (int i = 0; i < totalStudents; i++)
     {
         if (students[i].roll == roll)
         {
+            cout << "\nStudent Found:\n";
+            cout << "Name   : " << students[i].name << "\n";
+            cout << "Course : " << students[i].course << "\n";
+
+            char confirm;
+
+            cout << "\nAre you sure you want to delete this student? (Y/N): ";
+            cin >> confirm;
+
+            if (confirm != 'Y' && confirm != 'y')
+            {
+                cout << "\nDeletion Cancelled.\n";
+                return;
+            }
+
             for (int j = i; j < totalStudents - 1; j++)
             {
                 students[j] = students[j + 1];
@@ -115,7 +345,10 @@ void deleteStudent()
 
             totalStudents--;
 
+            saveToFile();
+
             cout << "\nStudent Deleted Successfully!\n";
+
             return;
         }
     }
@@ -127,17 +360,33 @@ int main()
 {
     int choice;
 
+    loadFromFile();
+
+    cout << "\n==========================================\n";
+    cout << "       COLLEGE MANAGEMENT SYSTEM\n";
+    cout << "==========================================\n";
+
+    if (totalStudents > 0)
+    {
+        cout << "Loaded " << totalStudents
+             << " student(s) from database.\n";
+    }
+
     do
     {
-        cout << "\n====================================";
-        cout << "\n     COLLEGE MANAGEMENT SYSTEM";
-        cout << "\n====================================";
-        cout << "\n1. Add Student";
-        cout << "\n2. View Students";
-        cout << "\n3. Search Student";
-        cout << "\n4. Delete Student";
-        cout << "\n5. Exit";
-        cout << "\nEnter your choice: ";
+        cout << "\n==========================================\n";
+        cout << "       COLLEGE MANAGEMENT SYSTEM\n";
+        cout << "==========================================\n";
+
+        cout << "1. Add Student\n";
+        cout << "2. View Students\n";
+        cout << "3. Search Student\n";
+        cout << "4. Update Student\n";
+        cout << "5. Delete Student\n";
+        cout << "6. Exit\n";
+
+        cout << "------------------------------------------\n";
+        cout << "Enter your choice: ";
         cin >> choice;
 
         switch (choice)
@@ -155,18 +404,25 @@ int main()
             break;
 
         case 4:
-            deleteStudent();
+            updateStudent();
             break;
 
         case 5:
-            cout << "\nThank You!\n";
+            deleteStudent();
+            break;
+
+        case 6:
+            saveToFile();
+            cout << "\nData Saved Successfully!\n";
+            cout << "Thank You for Using College Management System!\n";
             break;
 
         default:
-            cout << "\nInvalid Choice!\n";
+            cout << "\nInvalid Choice! Please try again.\n";
         }
 
-    } while (choice != 5);
+    } while (choice != 6);
 
     return 0;
 }
+
