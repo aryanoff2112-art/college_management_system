@@ -1,14 +1,13 @@
 #include <iostream>
 #include <string>
 #include <fstream>
-
+#include <algorithm>
 using namespace std;
 
 const int MAX_STUDENTS = 100;
 const string FILE_NAME = "students.txt";
 
-struct Student
-{
+struct Student{
     int roll;
     string name;
     int age;
@@ -23,20 +22,17 @@ void viewStudents();
 void searchStudent();
 void updateStudent();
 void deleteStudent();
+void sortStudents();
 void saveToFile();
 void loadFromFile();
 bool rollExists(int roll);
 
-bool rollExists(int roll)
-{
-    for (int i = 0; i < totalStudents; i++)
-    {
-        if (students[i].roll == roll)
-        {
+bool rollExists(int roll){
+    for (int i = 0; i < totalStudents; i++){
+        if (students[i].roll == roll){
             return true;
         }
     }
-
     return false;
 }
 
@@ -91,17 +87,27 @@ void loadFromFile()
         if (!getline(file, course))
             break;
 
+        int roll;
+        int age;
+
         try
         {
-            students[totalStudents].roll = stoi(rollString);
-            students[totalStudents].age = stoi(ageString);
+            roll = stoi(rollString);
+            age = stoi(ageString);
         }
         catch (...)
         {
             continue;
         }
 
+        if (rollExists(roll))
+        {
+            continue;
+        }
+
+        students[totalStudents].roll = roll;
         students[totalStudents].name = name;
+        students[totalStudents].age = age;
         students[totalStudents].course = course;
 
         totalStudents++;
@@ -356,6 +362,79 @@ void deleteStudent()
     cout << "\nStudent Not Found!\n";
 }
 
+void sortStudents()
+{
+    if (totalStudents == 0)
+    {
+        cout << "\nNo Students Available!\n";
+        return;
+    }
+
+    int choice;
+
+    cout << "\n========== SORT STUDENTS ==========\n";
+    cout << "1. Sort by Roll Number\n";
+    cout << "2. Sort by Name\n";
+    cout << "3. Sort by Age\n";
+    cout << "4. Sort by Course\n";
+    cout << "5. Back\n";
+    cout << "----------------------------------\n";
+    cout << "Enter your choice: ";
+    cin >> choice;
+
+    switch (choice)
+    {
+    case 1:
+        sort(students, students + totalStudents,
+             [](const Student& a, const Student& b)
+             {
+                 return a.roll < b.roll;
+             });
+
+        cout << "\nStudents Sorted by Roll Number!\n";
+        break;
+
+    case 2:
+        sort(students, students + totalStudents,
+             [](const Student& a, const Student& b)
+             {
+                 return a.name < b.name;
+             });
+
+        cout << "\nStudents Sorted by Name!\n";
+        break;
+
+    case 3:
+        sort(students, students + totalStudents,
+             [](const Student& a, const Student& b)
+             {
+                 return a.age < b.age;
+             });
+
+        cout << "\nStudents Sorted by Age!\n";
+        break;
+
+    case 4:
+        sort(students, students + totalStudents,
+             [](const Student& a, const Student& b)
+             {
+                 return a.course < b.course;
+             });
+
+        cout << "\nStudents Sorted by Course!\n";
+        break;
+
+    case 5:
+        return;
+
+    default:
+        cout << "\nInvalid Choice!\n";
+        return;
+    }
+
+    saveToFile();
+}
+
 int main()
 {
     int choice;
@@ -383,7 +462,8 @@ int main()
         cout << "3. Search Student\n";
         cout << "4. Update Student\n";
         cout << "5. Delete Student\n";
-        cout << "6. Exit\n";
+        cout << "6. Sort Students\n";
+        cout << "7. Exit\n";
 
         cout << "------------------------------------------\n";
         cout << "Enter your choice: ";
@@ -412,6 +492,10 @@ int main()
             break;
 
         case 6:
+            sortStudents();
+            break;
+
+        case 7:
             saveToFile();
             cout << "\nData Saved Successfully!\n";
             cout << "Thank You for Using College Management System!\n";
@@ -421,8 +505,9 @@ int main()
             cout << "\nInvalid Choice! Please try again.\n";
         }
 
-    } while (choice != 6);
+    } while (choice != 7);
 
     return 0;
 }
+
 
